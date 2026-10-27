@@ -1,114 +1,120 @@
 # Squelch 2
 
-## Executar em poucos passos
+Sequenciador web de baixo acid com geração de padrões, síntese em tempo real e exportação MIDI. O servidor Java implementa a geração musical e a exportação; a interface utiliza Web Audio para síntese, efeitos e reprodução no navegador.
 
-1. Instale Java 17 ou superior. Para recompilar, use um **JDK**, não apenas o runtime.
-2. Execute o JAR incluído:
+## Requisitos
+
+- JDK 17 ou superior, disponível no `PATH` ou configurado em `JAVA_HOME`.
+- Navegador atualizado com suporte a Web Audio.
+- Node.js e Google Chrome para os testes de navegador, opcionais.
+
+## Instalação e execução
+
+```sh
+git clone https://github.com/zqovark/squeltch-2.git
+cd squeltch-2
+```
+
+### Windows
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\run.ps1
+```
+
+### Linux e macOS
+
+```sh
+sh build.sh
+sh run.sh
+```
+
+Acesse [http://127.0.0.1:8080](http://127.0.0.1:8080). Para encerrar o servidor, pressione `Ctrl+C` no terminal.
+
+A compilação gera `build/squelch-java.jar`, incluindo os recursos da interface. Esse arquivo não é versionado. Após alterações no código ou nos recursos web, execute o build novamente.
+
+O JAR também pode ser executado diretamente:
 
 ```sh
 java -jar build/squelch-java.jar
 ```
 
-4. Abra **http://127.0.0.1:8080** no navegador e pressione Play ou Espaço.
-5. Para encerrar, pressione `Ctrl+C` no terminal.
-
-O JAR já contém a interface. Não é necessário instalar Maven, Gradle, Node.js, banco de dados, plugins de navegador ou bibliotecas externas. Após instalar Java, o aplicativo funciona localmente sem internet. Não abra `index.html` diretamente: a interface usa a API Java.
-
-### Compilar e testar no Windows
-
-Com JDK 17+ no `PATH` ou configurado em `JAVA_HOME`:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -Test
-powershell -NoProfile -ExecutionPolicy Bypass -File .\run.ps1
-```
-
-O parâmetro de política vale apenas para esse processo. Também é possível executar `./build.ps1 -Test` e `./run.ps1` diretamente quando a configuração local permite scripts.
-
-### Compilar e testar no Linux/macOS
-
-```sh
-sh build.sh --test
-sh run.sh
-```
-
-Os scripts recompilam o código Java e empacotam os arquivos web em `build/squelch-java.jar`. Depois de alterar código Java ou arquivos web, execute o build novamente. `run` compila automaticamente apenas quando o JAR ainda não existe.
-
-### Outra porta ou acesso pela rede
+### Endereço e porta
 
 ```sh
 java -jar build/squelch-java.jar 9090
 java -jar build/squelch-java.jar 9090 0.0.0.0
 ```
 
-O primeiro argumento é a porta; o segundo é o endereço de escuta. O padrão é `127.0.0.1:8080`, acessível apenas no próprio computador. Para disponibilização pública, use uma hospedagem capaz de executar Java e um proxy HTTPS. GitHub Pages hospeda somente arquivos estáticos e não executa este servidor Java.
+Os argumentos definem, respectivamente, a porta e o endereço de escuta. O padrão é `127.0.0.1:8080`. O endereço `0.0.0.0` permite conexões pelas interfaces de rede disponíveis. Uma implantação pública requer um ambiente capaz de executar Java e um proxy HTTPS.
 
-## Usar o sequenciador
+## Controles
 
-- **Play / Espaço:** iniciar ou parar. O navegador libera áudio após uma interação.
-- **Botão de sorriso / G:** gerar outra linha com as configurações atuais.
-- **Tempo:** 80–180 BPM pela interface; o delay acompanha o tempo em 3/16.
-- **Sound:** cutoff, ressonância, modulação de envelope, decay, intensidade do acento, drive, delay, volume e onda SAW/SQR.
-- **Generate:** escala, tonalidade, 8/16/24/32 passos, densidade, chance de acentos, chance de slides e 1/2/3 oitavas.
-- As seis escalas originais estão disponíveis: Minor, Phrygian, Minor Pentatonic, Dorian, Harmonic Minor e Major. Há 12 tonalidades de A1 a G#2.
-- A grade mostra notas, pausas, acentos em âmbar, slides em magenta e o passo atual; o osciloscópio acompanha o sinal.
-- **Ableton / FL Studio:** baixar a sequência exibida como `.mid`, com o BPM atual.
+| Controle | Função |
+| --- | --- |
+| Play / Espaço | Iniciar ou parar a reprodução |
+| Generate / G | Gerar um padrão com as configurações atuais |
+| Tempo | Ajustar o andamento entre 80 e 180 BPM |
+| Sound | Ajustar cutoff, ressonância, envelope, decay, acento, drive, delay, volume e forma de onda SAW/SQR |
+| Generate | Selecionar escala, tonalidade, comprimento, densidade, acentos, slides e extensão em oitavas |
+| Ableton / FL Studio | Exportar o padrão exibido em formato MIDI |
 
-Alterações de geração solicitam outra sequência ao Java. A anterior continua tocando enquanto a resposta chega; a nova é usada nos próximos passos ainda não agendados. A fila de áudio antecipa aproximadamente 100 ms. Mudanças rápidas descartam respostas antigas.
+O gerador oferece seis escalas — Minor, Phrygian, Minor Pentatonic, Dorian, Harmonic Minor e Major —, 12 tonalidades entre A1 e G#2, sequências de 8, 16, 24 ou 32 passos e extensão de uma a três oitavas.
 
-Os atalhos globais não interceptam campos e botões com foco. Em telas pequenas, a grade possui rolagem horizontal própria. Como no original, não há edição manual das notas, contas, gravação de áudio ou persistência de projetos. Recarregar a página cria outra sequência.
+A grade identifica notas, pausas, acentos, slides e o passo em reprodução. O osciloscópio exibe o sinal de saída. Alterações nos parâmetros de geração atualizam a sequência durante a reprodução, preservando o padrão anterior até a chegada da resposta do servidor.
 
-### Importar MIDI
+Os atalhos globais ficam inativos quando um campo ou botão está com foco. O estado da sequência é mantido na aba; recarregar a página gera um novo padrão. Novas gerações e exportações dependem do servidor ativo.
 
-No Ableton, arraste o arquivo para uma pista MIDI. No FL Studio, use a importação MIDI ou arraste o arquivo para o ambiente apropriado do programa. Escolha um instrumento mono com portamento/glide para interpretar a sobreposição de notas como slides.
+## Exportação MIDI
 
-O arquivo é Standard MIDI File tipo 1, com duas pistas, resolução de 96 PPQ e compasso 4/4. Cada passo equivale a uma semicolcheia (24 ticks); 16 passos formam um compasso. Acentos usam velocity 118; notas normais, 92. Slides prolongam a nota por 8 ticks além do próximo passo; a última nota é limitada ao fim do loop, como no original. Os dois botões mudam o nome da pista e do arquivo, preservando o mesmo formato MIDI.
+Os dois destinos utilizam Standard MIDI File tipo 1, com duas pistas, resolução de 96 PPQ, compasso 4/4 e tempo incorporado. Cada passo corresponde a uma semicolcheia; 16 passos formam um compasso.
 
-MIDI contém notas e tempo, não o som sintetizado nem os ajustes de cutoff/drive/delay. O resultado sonoro na DAW depende do instrumento escolhido.
+- Notas acentuadas usam velocity 118; as demais, 92.
+- Slides são representados por sobreposição de notas de 8 ticks.
+- A última nota termina no limite do loop.
+- Os destinos diferem no nome do arquivo e da pista.
+
+Importe o arquivo em uma pista MIDI da DAW. Para reproduzir os slides, utilize um instrumento monofônico com portamento. O MIDI contém notas, velocidades e tempo; os parâmetros de síntese e efeitos devem ser configurados no instrumento de destino.
 
 ## Estrutura
 
 ```text
-src/main/java/squelch/
-  App.java              Servidor HTTP, recursos web e validação da API
-  Music.java            Escalas, nomes e intervalos
-  Generator.java        Geração musical em Java
-  Pattern.java          Sequência e passos imutáveis
-  MidiExporter.java     Exportação via javax.sound.midi
-  Json.java             Serialização de strings JSON
-src/main/resources/web/
-  main.js, api.js        Controles e comunicação com Java
-  audio/                Síntese e efeitos Web Audio
-  sequencer/            Agendamento com relógio de áudio
-  ui/                   Grade, controles e osciloscópio
-src/test/               Testes Java e 216 casos de referência
-tests/                  Teste opcional de navegador com Playwright
-build/squelch-java.jar   Aplicativo executável
+src/main/java/squelch/       Servidor HTTP, gerador, escalas e exportação MIDI
+src/main/resources/web/     Interface, síntese Web Audio e agendamento
+src/test/                  Testes Java e casos de referência do gerador
+tests/                     Testes de navegador com Playwright
+build/                     Artefatos gerados pela compilação
 ```
 
-Detalhes: [arquitetura e API](docs/ARCHITECTURE.md), [relatório de validação](docs/VALIDATION.md), [origem e atribuições](THIRD_PARTY_NOTICES.md).
+## Testes
 
-## Testes opcionais de navegador
+### Java
 
-Os testes Java não exigem dependências. Para repetir a verificação adicional de navegador, é necessário Node.js e Chrome instalado:
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -Test
+```
+
+```sh
+sh build.sh --test
+```
+
+A suíte verifica 216 casos de referência do gerador, a estrutura e os eventos MIDI, a validação da API e requisições concorrentes. Utiliza apenas o JDK.
+
+### Navegador
+
+Após compilar o projeto, instale as dependências de teste e inicie o servidor:
 
 ```sh
 npm --prefix tests install
 java -jar build/squelch-java.jar 8765
 ```
 
-Em outro terminal, na pasta do projeto:
+Em outro terminal, na raiz do repositório:
 
 ```sh
 npm --prefix tests test
 ```
 
-Os resultados visuais e downloads de teste são gravados em `build/browser-qa`. O teste usa o Chrome em modo sem janela e verifica o sinal de áudio internamente. A variável `SQUELCH_URL` pode apontar para outra porta. Os scripts de shell foram incluídos, mas a execução desta entrega foi validada no Windows.
+O Playwright executa o Chrome em modo headless e verifica controles, reprodução, sinal de áudio, exportação e comportamento em telas pequenas. Capturas e downloads são gravados em `build/browser-qa`. A variável `SQUELCH_URL` permite definir outro endereço para o servidor.
 
-## Solução de problemas
-
-- **`java`/`javac` não encontrado:** instale o JDK e adicione sua pasta `bin` ao `PATH`, ou configure `JAVA_HOME` para os scripts.
-- **Porta ocupada:** execute em outra porta, por exemplo `9090`.
-- **Sem som:** pressione Play, confira o volume da interface e o volume/mute da aba e do sistema. Use um navegador atualizado com Web Audio.
-- **Falha ao gerar/exportar:** mantenha o terminal do servidor aberto. A última sequência carregada permanece disponível para reprodução.
-- **Navegador suspendeu a aba:** retorne à aba e pare/inicie a reprodução. Abas em segundo plano podem ser limitadas pelo navegador.
+A execução foi validada no Windows. Os scripts para Linux e macOS estão disponíveis, mas ainda não foram validados nesses sistemas.
